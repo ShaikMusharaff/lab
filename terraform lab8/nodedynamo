@@ -1,0 +1,150 @@
+Perfect—that’s exactly the right mindset. Let’s build this **from absolute zero**, as if you’ve never used DynamoDB before. I’ll keep it simple, clear, and runnable on your Ubuntu system.
+
+---
+
+# 🌱 Step 0: What is DynamoDB (in 1 minute)
+
+* **Amazon Web Services DynamoDB** is a **NoSQL database**
+* Instead of tables with rows/columns like MySQL:
+
+  * It stores **items (JSON-like data)**
+* You only need:
+
+  * **Table name**
+  * **Primary key (id)**
+
+---
+
+# ⚙️ Step 1: Setup AWS (Common for both Node.js & Go)
+
+## 1. Install AWS CLI
+
+```bash
+sudo apt update
+sudo apt install awscli -y
+```
+
+## 2. Configure AWS
+
+```bash
+aws configure
+```
+
+Enter:
+
+```
+Access Key: (from AWS account)
+Secret Key: (from AWS account)
+Region: ap-south-1
+Output: json
+```
+
+👉 If you don’t have keys:
+
+* Go to **AWS Console → IAM → Users → Create Access Key**
+
+---
+
+# 🟢 TASK 1: Node.js (FROM SCRATCH)
+
+---
+
+## 📦 Step 2: Setup Node Project
+
+```bash
+mkdir dynamo-node
+cd dynamo-node
+npm init -y
+npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
+```
+
+---
+
+## 🧠 Step 3: Understand Flow
+
+We will:
+
+1. Create table
+2. Insert data
+3. Update field
+4. Delete table
+
+---
+
+## 📄 Step 4: Create File
+
+```bash
+touch app.js
+```
+
+---
+
+## 💻 Step 5: Code (Simple Version)
+
+```javascript
+const { DynamoDBClient, CreateTableCommand, DeleteTableCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, PutCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
+
+const client = new DynamoDBClient({ region: "ap-south-1" });
+const docClient = DynamoDBDocumentClient.from(client);
+
+// CREATE TABLE
+async function createTable() {
+    await client.send(new CreateTableCommand({
+        TableName: "Students",
+        KeySchema: [{ AttributeName: "id", KeyType: "HASH" }],
+        AttributeDefinitions: [{ AttributeName: "id", AttributeType: "S" }],
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+    }));
+    console.log("Table Created");
+}
+
+// INSERT
+async function insert() {
+    await docClient.send(new PutCommand({
+        TableName: "Students",
+        Item: { id: "1", name: "Musharaff", branch: "CSE" }
+    }));
+    console.log("Item Inserted");
+}
+
+// UPDATE
+async function update() {
+    await docClient.send(new UpdateCommand({
+        TableName: "Students",
+        Key: { id: "1" },
+        UpdateExpression: "set branch = :b",
+        ExpressionAttributeValues: { ":b": "AI & ML" }
+    }));
+    console.log("Item Updated");
+}
+
+// DELETE TABLE
+async function deleteTable() {
+    await client.send(new DeleteTableCommand({ TableName: "Students" }));
+    console.log("Table Deleted");
+}
+
+// RUN
+(async () => {
+    await createTable();
+
+    setTimeout(async () => {
+        await insert();
+        await update();
+
+        // Uncomment to delete
+        // await deleteTable();
+    }, 5000);
+})();
+```
+
+---
+
+## ▶️ Step 6: Run
+
+```bash
+node app.js
+```
+
+---

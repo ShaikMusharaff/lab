@@ -1,0 +1,314 @@
+Let’s do **Task 3 (ML-as-a-Service)** in a *clear, detailed, no-confusion flow*—the kind you can both **execute and explain in viva confidently**.
+
+---
+
+# 🚀 **TASK 3: ML-as-a-Service using Minikube (Detailed)**
+
+---
+
+## 🧠 **What you are building**
+
+You are creating this pipeline:
+
+```
+ML Logic → API (Flask) → Docker → Kubernetes → Service → Prediction Output
+```
+
+👉 End result:
+You send input → get prediction via URL
+
+---
+
+# 🔹 **STEP 1: Create Project**
+
+```bash
+mkdir mllab
+cd mllab
+```
+
+---
+
+# 🔹 **STEP 2: Create ML API**
+
+Create file:
+
+```bash
+nano app.py
+```
+
+Paste:
+
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "ML Service Running 🚀"
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.json["value"]
+    
+    # Simple ML model (y = 2x)
+    result = 2 * data
+
+    return jsonify({"prediction": result})
+
+app.run(host="0.0.0.0", port=5000)
+```
+
+👉 This is your **ML-as-a-service**
+
+---
+
+# 🔹 **STEP 3: Create requirements.txt**
+
+```bash
+nano requirements.txt
+```
+
+Add:
+
+```
+flask
+```
+
+Save & exit.
+
+---
+
+# 🔹 **STEP 4: Create Dockerfile**
+
+```bash
+nano Dockerfile
+```
+
+Paste:
+
+```Dockerfile
+FROM python:3.10
+
+WORKDIR /app
+COPY . .
+
+RUN pip install -r requirements.txt
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
+```
+
+---
+
+# 🔹 **STEP 5: Start Minikube**
+
+```bash
+minikube start --driver=docker
+```
+
+Check:
+
+```bash
+kubectl get nodes
+```
+
+---
+
+# 🔹 **STEP 6: Use Minikube Docker (IMPORTANT 🔥)**
+
+```bash
+eval $(minikube docker-env)
+```
+
+👉 Without this → ImagePullBackOff error
+
+---
+
+# 🔹 **STEP 7: Build Docker Image**
+
+```bash
+docker build -t ml-service .
+```
+
+Verify:
+
+```bash
+docker images
+```
+
+---
+
+# 🔹 **STEP 8: Create Deployment YAML**
+
+```bash
+nano ml-deployment.yaml
+```
+
+Paste:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: ml-deployment
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: ml-app
+
+  template:
+    metadata:
+      labels:
+        app: ml-app
+
+    spec:
+      containers:
+      - name: ml-container
+        image: ml-service
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
+```
+
+---
+
+# 🔹 **STEP 9: Deploy to Kubernetes**
+
+```bash
+kubectl apply -f ml-deployment.yaml
+```
+
+---
+
+# 🔹 **STEP 10: Check Pods**
+
+```bash
+kubectl get pods
+```
+
+✅ Expected:
+
+```
+ml-deployment-xxxxx   1/1   Running
+```
+
+❌ If not:
+
+```bash
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+```
+
+---
+
+# 🔹 **STEP 11: Expose Service**
+
+```bash
+kubectl expose deployment ml-deployment --type=NodePort --port=5000
+```
+
+---
+
+# 🔹 **STEP 12: Get Service URL**
+
+```bash
+minikube service ml-deployment
+```
+
+👉 You’ll get:
+
+```
+http://192.168.x.x:xxxxx
+```
+
+---
+
+# 🔹 **STEP 13: Test ML Prediction**
+
+```bash
+curl -X POST http://<URL>/predict \
+-H "Content-Type: application/json" \
+-d '{"value": 5}'
+```
+
+---
+
+# ✅ **FINAL OUTPUT**
+
+```json
+{
+  "prediction": 10
+}
+```
+
+---
+
+# 🎯 **What each component does (IMPORTANT)**
+
+| Component  | Role                |
+| ---------- | ------------------- |
+| Flask API  | Exposes ML model    |
+| Docker     | Packages app        |
+| Deployment | Runs container      |
+| Pod        | Running instance    |
+| Service    | Makes it accessible |
+
+---
+
+# 🔥 **Common Errors (and fixes)**
+
+### ❌ ImagePullBackOff
+
+✔ Run:
+
+```bash
+eval $(minikube docker-env)
+docker build -t ml-service .
+```
+
+---
+
+### ❌ connection refused
+
+✔ Run:
+
+```bash
+minikube start
+```
+
+---
+
+### ❌ requirements.txt missing
+
+✔ Ensure file exists in same folder
+
+---
+
+# 🧠 **Viva Explanation (VERY IMPORTANT)**
+
+> “We created a Flask-based ML API, containerized it using Docker, deployed it on Kubernetes using Minikube, and exposed it as a NodePort service to obtain predictions via HTTP requests.”
+
+---
+
+# 🚀 **Bonus (if teacher asks)**
+
+You can say:
+
+* This is **ML deployment pipeline**
+* Can scale using replicas
+* Can replace logic with real models (Linear Regression, etc.)
+
+---
+
+If you want next level:
+🔥 I can upgrade this to **real ML model (sklearn)**
+🔥 Or give you **perfect lab record PDF content**
+🔥 Or debug your current setup live
+
+You’re very close to finishing like a pro 👍

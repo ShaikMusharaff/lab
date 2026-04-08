@@ -1,0 +1,260 @@
+Perfect—let’s do this **cleanly from zero to working DynamoDB in Go**, with no gaps. Follow these steps exactly and you’ll have a working setup.
+
+---
+
+# 🟢 STEP 1: Install Go (Correct Way)
+
+We’ll use the official **Go programming language**
+
+```bash
+sudo rm -rf /usr/local/go
+wget https://go.dev/dl/go1.22.5.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.22.5.linux-amd64.tar.gz
+```
+
+### Add PATH
+
+```bash
+nano ~/.bashrc
+```
+
+Add at end:
+
+```bash
+export PATH=/usr/local/go/bin:$PATH
+```
+
+Apply:
+
+```bash
+source ~/.bashrc
+```
+
+### Verify
+
+```bash
+go version
+```
+
+✅ Must show:
+
+```
+go1.22.x
+```
+
+---
+
+# 🟢 STEP 2: Setup AWS (Required)
+
+Configure **Amazon Web Services**
+
+```bash
+aws configure
+```
+
+Enter:
+
+```
+Access Key
+Secret Key
+Region: ap-south-1
+Output: json
+```
+
+Test:
+
+```bash
+aws dynamodb list-tables
+```
+
+---
+
+# 🟢 STEP 3: Create Go Project
+
+```bash
+mkdir dynamo-go
+cd dynamo-go
+go mod init dynamo-go
+```
+
+---
+
+# 🟢 STEP 4: Install Dependencies
+
+```bash
+go get github.com/aws/aws-sdk-go-v2
+go get github.com/aws/aws-sdk-go-v2/config
+go get github.com/aws/aws-sdk-go-v2/service/dynamodb
+```
+
+---
+
+# 🟢 STEP 5: Create File
+
+```bash
+nano main.go
+```
+
+---
+
+# 🟢 STEP 6: Paste Working Code
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
+
+var tableName = "Students"
+
+func main() {
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion("ap-south-1"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client := dynamodb.NewFromConfig(cfg)
+
+	createTable(client)
+	insertItem(client)
+	updateItem(client)
+}
+
+// CREATE TABLE
+func createTable(client *dynamodb.Client) {
+	_, err := client.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
+		TableName: &tableName,
+		AttributeDefinitions: []types.AttributeDefinition{
+			{AttributeName: str("id"), AttributeType: types.ScalarAttributeTypeS},
+		},
+		KeySchema: []types.KeySchemaElement{
+			{AttributeName: str("id"), KeyType: types.KeyTypeHash},
+		},
+		BillingMode: types.BillingModePayPerRequest,
+	})
+
+	if err != nil {
+		fmt.Println("Table may already exist")
+	} else {
+		fmt.Println("Table Created")
+	}
+
+	waitForTable(client)
+}
+
+// WAIT UNTIL TABLE READY
+func waitForTable(client *dynamodb.Client) {
+	for {
+		out, err := client.DescribeTable(context.TODO(), &dynamodb.DescribeTableInput{
+			TableName: &tableName,
+		})
+		if err == nil && out.Table.TableStatus == types.TableStatusActive {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+}
+
+// INSERT
+func insertItem(client *dynamodb.Client) {
+	_, err := client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+		TableName: &tableName,
+		Item: map[string]types.AttributeValue{
+			"id":     &types.AttributeValueMemberS{Value: "1"},
+			"name":   &types.AttributeValueMemberS{Value: "Musharaff"},
+			"branch": &types.AttributeValueMemberS{Value: "CSE"},
+		},
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Item Inserted")
+}
+
+// UPDATE
+func updateItem(client *dynamodb.Client) {
+	_, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
+		TableName: &tableName,
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: "1"},
+		},
+		UpdateExpression: str("SET branch = :b"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":b": &types.AttributeValueMemberS{Value: "AI & ML"},
+		},
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Item Updated")
+}
+
+// HELPERS
+func str(s string) *string { return &s }
+```
+
+---
+
+# 🟢 STEP 7: Run Program
+
+```bash
+go run main.go
+```
+
+Expected output:
+
+```
+Table Created (or already exists)
+Item Inserted
+Item Updated
+```
+
+---
+
+# 🟢 STEP 8: Verify Data
+
+```bash
+aws dynamodb scan --table-name Students --region ap-south-1
+```
+
+---
+
+# 🧠 Important Points (Exam/Viva)
+
+* DynamoDB is **NoSQL**
+* Table must be **ACTIVE before insert**
+* `PutItem` → Insert
+* `UpdateItem` → Modify
+* Region must match everywhere
+
+---
+
+# 🚨 If Error Comes
+
+Tell me:
+
+```bash
+go version
+aws configure list
+go run main.go (full error)
+```
+
+I’ll fix it instantly for you 👍
+
+---
+
+If you want next:
+
+👉 Convert this into **REST API (Go + Gin)**
+👉 Or integrate into **CI/CD pipeline (your assignment 🔥)**

@@ -1,0 +1,203 @@
+This is a very solid DevOps + Kubernetes + ML assignment—you’re essentially building a **mini production system**. I’ll guide you step-by-step in a clean, practical way so you can *actually run everything on your laptop*.
+
+---
+
+# ✅ **Task 1: Install Minikube + Start + Dashboard**
+
+### 🔹 Step 1: Install Minikube
+
+```bash
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+```
+
+Check:
+
+```bash
+minikube version
+```
+
+---
+
+### 🔹 Step 2: Install kubectl
+
+```bash
+sudo snap install kubectl --classic
+```
+
+Check:
+
+```bash
+kubectl version --client
+```
+
+---
+
+### 🔹 Step 3: Start Minikube (Docker driver)
+
+```bash
+minikube start --driver=docker
+```
+
+👉 If docker not installed:
+
+```bash
+sudo apt install docker.io -y
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+---
+
+### 🔹 Step 4: Open Dashboard
+
+```bash
+minikube dashboard
+```
+
+👉 This opens a browser showing:
+
+* Pods
+* Deployments
+* Services
+* Nodes
+
+---
+
+### 🔹 Useful Commands to Explore
+
+```bash
+kubectl get nodes
+kubectl get pods -A
+kubectl get deployments
+kubectl get services
+```
+
+---
+
+# ✅ **Task 2: Deploy Containerized App**
+
+We’ll deploy a **simple Node.js app**.
+
+---
+
+## 🔹 Step 1: Create Node.js App
+
+**app.js**
+
+```js
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Hello from Minikube 🚀");
+});
+
+app.listen(3000, () => console.log("Server running"));
+```
+
+---
+
+## 🔹 Step 2: Dockerfile
+
+```Dockerfile
+FROM node:18
+
+WORKDIR /app
+COPY . .
+RUN npm install express
+
+EXPOSE 3000
+CMD ["node", "app.js"]
+```
+
+---
+
+## 🔹 Step 3: Build Image INSIDE Minikube
+
+```bash
+eval $(minikube docker-env)
+docker build -t my-node-app .
+```
+
+---
+
+## 🔹 Step 4: Deployment YAML
+
+**deployment.yaml**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: node-deployment
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: node-app
+
+  template:
+    metadata:
+      labels:
+        app: node-app
+
+    spec:
+      containers:
+      - name: node-container
+        image: my-node-app
+        ports:
+        - containerPort: 3000
+```
+
+---
+
+## 🔹 Step 5: Apply Deployment
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+Check:
+
+```bash
+kubectl get pods
+kubectl get deployments
+```
+
+---
+
+## 🔹 Step 6: Expose Service
+
+```bash
+kubectl expose deployment node-deployment --type=NodePort --port=3000
+```
+
+Get URL:
+
+```bash
+minikube service node-deployment
+```
+
+---
+
+# ✅ YAML Explained (Important for Viva 🔥)
+
+* **apiVersion** → version of Kubernetes API
+* **kind** → type (Deployment, Pod, Service)
+* **metadata** → name, labels
+* **spec** → actual configuration
+
+Inside spec:
+
+* **replicas** → number of pods
+* **selector** → identifies pods
+* **template** → pod blueprint
+* **containers** → container details (image, ports)
+
+---
+
+#

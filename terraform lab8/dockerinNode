@@ -1,0 +1,248 @@
+This is a very solid DevOps foundation task—you’ll actually *understand Docker properly* if you do it step by step. I’ll guide you from **zero → running Node.js container** in a clean, practical way.
+
+---
+
+# 🔹 Task 1: Explore Docker (Basic + Important Commands)
+
+## 🧱 Step 1: Install Docker (Ubuntu)
+
+Run:
+
+```bash
+sudo apt update
+sudo apt install docker.io -y
+```
+
+Start and enable Docker:
+
+```bash
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+Check version:
+
+```bash
+docker --version
+```
+
+Add permission (so no sudo needed):
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+---
+
+## 🚀 Step 2: Core Docker Commands
+
+### 📦 Image Commands
+
+```bash
+docker pull node          # Download image
+docker images             # List images
+docker rmi <image_id>     # Delete image
+```
+
+---
+
+### 📦 Container Commands
+
+```bash
+docker run -it ubuntu bash     # Run container
+docker ps                      # Running containers
+docker ps -a                   # All containers
+docker stop <id>               # Stop container
+docker start <id>              # Start container
+docker rm <id>                 # Delete container
+```
+
+---
+
+### 🔍 Inspect & Logs
+
+```bash
+docker logs <container_id>
+docker exec -it <container_id> bash
+```
+
+---
+
+💡 *Think like this:*
+
+* Image = template
+* Container = running app
+
+---
+
+# 🔹 Task 2: Create Docker Container with Your Name (Dockerfile)
+
+Now we build your **own custom container**.
+
+## 📁 Step 1: Create Project Folder
+
+```bash
+mkdir my-docker-app
+cd my-docker-app
+```
+
+---
+
+## 🧾 Step 2: Create Dockerfile
+
+```bash
+nano Dockerfile
+```
+
+Paste:
+
+```Dockerfile
+FROM ubuntu:latest
+
+LABEL maintainer="Shaik Musharaff"
+
+CMD ["echo", "Hello, this container is created by Musharaff 🚀"]
+```
+
+---
+
+## 🏗️ Step 3: Build Image
+
+```bash
+docker build -t musharaff-image .
+```
+
+---
+
+## ▶️ Step 4: Run Container
+
+```bash
+docker run musharaff-image
+```
+
+✅ Output:
+
+```
+Hello, this container is created by Musharaff 🚀
+```
+
+---
+
+# 🔹 Task 3: Run Node.js App in Docker + Expose It
+
+Now the *real DevOps part* 🔥
+
+---
+
+## 📁 Step 1: Create Node.js App
+
+```bash
+mkdir node-docker
+cd node-docker
+```
+
+Create file:
+
+```bash
+nano app.js
+```
+
+Paste:
+
+```javascript
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+    res.end("Hello from Musharaff's Docker Node App 🚀");
+});
+
+server.listen(3000, () => {
+    console.log("Server running on port 3000");
+});
+```
+
+---
+
+## 🧾 Step 2: Create Dockerfile
+
+```bash
+nano Dockerfile
+```
+
+Paste:
+
+```Dockerfile
+FROM node:18
+
+WORKDIR /app
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "app.js"]
+```
+
+---
+
+## 🏗️ Step 3: Build Image
+
+```bash
+docker build -t node-app .
+```
+
+---
+
+## ▶️ Step 4: Run Container (IMPORTANT)
+
+```bash
+docker run -p 3000:3000 node-app
+```
+
+---
+
+## 🌐 Step 5: Access App
+
+Open browser:
+
+```
+http://localhost:3000
+```
+
+✅ Output:
+
+```
+Hello from Musharaff's Docker Node App 🚀
+```
+
+---
+
+# 🎯 Final Understanding (Very Important)
+
+* `Dockerfile` → Instructions to build image
+* `docker build` → Creates image
+* `docker run` → Runs container
+* `-p 3000:3000` → Maps port (host → container)
+* `EXPOSE` → Just documentation (actual mapping happens in `-p`)
+
+---
+
+# 🚀 Bonus (For Viva / Interview)
+
+You can say confidently:
+
+* “Docker helps in containerizing applications for consistent deployment”
+* “I created a custom image using Dockerfile”
+* “I exposed a Node.js service using port mapping”
+
+---
+
+If you want next level 🔥
+I can help you:
+
+* Push this image to Docker Hub
+* Deploy in Kubernetes (Minikube)
+* Add CI/CD using GitHub Actions
+
+Just tell me 👍

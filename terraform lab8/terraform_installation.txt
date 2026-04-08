@@ -1,0 +1,333 @@
+Task 1: Create a kubernetes resource using Terraform code. 
+
+Task 2: Install mongodb database on your local machine and explore commands to create, delete, and insert records of your B.Tech success stories. 
+
+Task 3: Create a CI/CD pipeline based on github actions that trigger Terraform code to start a service involving mongodb database. L
+
+
+
+et’s rebuild everything **cleanly from zero**, only with the exact commands you need. Follow in order—this will work smoothly.
+
+---
+
+# 🚀 **STEP 1: Install Required Tools**
+
+## 1. Install Docker
+
+```bash
+sudo apt update
+sudo apt install -y docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+Fix permission:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+Check:
+
+```bash
+docker --version
+```
+
+---
+
+## 2. Install kubectl
+
+```bash
+sudo apt install -y kubectl
+kubectl version --client
+```
+
+---
+
+## 3. Install Minikube
+
+```bash
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+```
+
+Check:
+
+```bash
+minikube version
+```
+
+---
+
+## 4. Install Terraform
+
+```bash
+wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
+unzip terraform_1.6.6_linux_amd64.zip
+sudo mv terraform /usr/local/bin/
+terraform -version
+```
+
+---
+
+# 🚀 **STEP 2: Start Kubernetes Cluster**
+
+```bash
+minikube start --driver=docker
+```
+
+Verify:
+
+```bash
+kubectl get nodes
+kubectl cluster-info
+```
+
+---
+
+# 🚀 **STEP 3: Create Terraform Kubernetes Resource**
+
+## 1. Create project
+
+```bash
+mkdir terraform-k8s
+cd terraform-k8s
+nano main.tf
+```
+
+---
+
+## 2. Paste Terraform code
+
+```hcl
+provider "kubernetes" {
+  config_path = "~/.kube/config"
+}
+
+resource "kubernetes_pod_v1" "nginx" {
+  metadata {
+    name = "nginx-pod"
+    labels = {
+      app = "nginx"
+    }
+  }
+
+  spec {
+    container {
+      image = "nginx"
+      name  = "nginx-container"
+    }
+  }
+}
+```
+
+---
+
+## 3. Run Terraform
+
+```bash
+terraform init
+terraform apply -auto-approve
+```
+
+---
+
+## 4. Verify
+
+```bash
+kubectl get pods
+```
+
+---
+
+# 🚀 **STEP 4: Install MongoDB + Commands**
+
+## 1. Install MongoDB
+
+```bash
+sudo apt update
+sudo apt install -y mongodb
+sudo systemctl start mongodb
+sudo systemctl enable mongodb
+```
+
+---
+
+## 2. Open Mongo Shell
+
+```bash
+mongo
+```
+
+---
+
+## 3. Commands inside MongoDB
+
+### Create DB
+
+```bash
+use btech
+```
+
+### Insert
+
+```bash
+db.success.insertOne({name:"Musharaff", achievement:"Built DevOps Project"})
+db.success.insertMany([
+  {name:"DSA", achievement:"Solved LeetCode"},
+  {name:"Gym", achievement:"Lost 6kg"}
+])
+```
+
+### Read
+
+```bash
+db.success.find()
+```
+
+### Delete
+
+```bash
+db.success.deleteOne({name:"DSA"})
+```
+
+### Drop DB
+
+```bash
+db.dropDatabase()
+```
+
+---
+
+#Let’s build your **CI/CD pipeline from absolute scratch**, clean and minimal, with only the commands and required file.
+
+This pipeline will:
+👉 Trigger on GitHub push
+👉 Run Terraform
+👉 Deploy your Kubernetes resource (nginx pod)
+
+---
+
+# 🚀 **STEP 1: Create Project Folder**
+
+```bash
+mkdir cicd-terraform
+cd cicd-terraform
+```
+
+---
+
+# 🚀 **STEP 2: Create Terraform File**
+
+```bash
+nano main.tf
+```
+
+Paste:
+
+```hcl
+provider "kubernetes" {
+  config_path = "~/.kube/config"
+}
+
+resource "kubernetes_pod_v1" "nginx" {
+  metadata {
+    name = "nginx-pod"
+    labels = {
+      app = "nginx"
+    }
+  }
+
+  spec {
+    container {
+      image = "nginx"
+      name  = "nginx-container"
+    }
+  }
+}
+```
+
+---
+
+# 🚀 **STEP 3: Initialize Git**
+
+```bash
+git init
+git add .
+git commit -m "initial commit"
+```
+
+---
+
+# 🚀 **STEP 4: Create GitHub Repo**
+
+👉 Go to GitHub and create repo manually
+
+Then connect:
+
+```bash
+git branch -M main
+git remote add origin https://github.com/<your-username>/<repo>.git
+git push -u origin main
+```
+
+---
+
+# 🚀 **STEP 5: Create CI/CD Workflow**
+
+```bash
+mkdir -p .github/workflows
+nano .github/workflows/terraform.yml
+```
+
+---
+
+# 🚀 **STEP 6: Paste GitHub Actions YAML**
+
+```yaml
+name: Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Apply
+      run: terraform plan
+```
+
+---
+
+# 🚀 **STEP 7: Push Workflow**
+
+```bash
+git add .
+git commit -m "added cicd pipeline"
+git push
+```
+
+---
+
+# 🚀 **STEP 8: Verify CI/CD**
+
+👉 Go to GitHub → **Actions tab**
+
+
+
+if error:
+git credential-cache exit
